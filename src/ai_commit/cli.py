@@ -1,5 +1,6 @@
 import argparse
 import sys
+from dataclasses import dataclass
 from typing import Any, Dict, Optional, Sequence
 
 from . import __version__
@@ -13,10 +14,41 @@ from .providers import generate_with_codex, generate_with_opencode
 from .status import status
 
 
+SHORTCUTS = {
+    "gpt": ("codex", "gpt-5.4-mini"),
+    "codex": ("codex", "gpt-5.4-mini"),
+    "kimi": ("opencode", "opencode-go/kimi-k2.5"),
+    "qwen": ("opencode", "opencode-go/qwen3.6-plus"),
+    "glm": ("opencode", "opencode-go/glm-5"),
+    "minimax": ("opencode", "opencode-go/minimax-m2.5"),
+}
+
+
+@dataclass(frozen=True)
+class ModelSelection:
+    provider: str
+    model: str
+
+
 def build_parser() -> argparse.ArgumentParser:
+    shortcuts = ", ".join(SHORTCUTS)
     parser = argparse.ArgumentParser(
         prog="ai-commit",
-        description="Generate a Conventional Commit message from your git diff.",
+        description=(
+            "Generate a Conventional Commit message from your git diff. "
+            "Default: codex/gpt-5.4-mini."
+        ),
+        epilog=(
+            "Examples: ai-commit | ai-commit gpt | ai-commit kimi --dry-run | "
+            "ai-commit qwen --staged-only | ai-commit --provider opencode "
+            "--model opencode-go/kimi-k2.5"
+        ),
+    )
+    parser.add_argument(
+        "shortcut",
+        nargs="?",
+        choices=list(SHORTCUTS),
+        help=f"Model shortcut to use. Choices: {shortcuts}.",
     )
     parser.add_argument("--provider", choices=["codex", "opencode"], help="AI provider to use.")
     parser.add_argument("--model", help="Model to use for this run, overriding config.")
@@ -66,11 +98,34 @@ def resolve_int(value: Any, name: str) -> int:
     return parsed
 
 
-def generate_message(provider: str, prompt: str, config: Dict[str, Any], model: Optional[str] = None) -> str:
+def resolve_model_selection(args: argparse.Namespace, config: Dict[str, Any]) -> ModelSelection:
+    shortcut_provider: Optional[str] = None
+    shortcut_model: Optional[str] = None
+
+    if args.shortcut:
+        shortcut_provider, shortcut_model = SHORTCUTS[args.shortcut]
+
+    provider = args.provider or shortcut_provider or str(config["provider"])
+    if provider not in {"codex", "opencode"}:
+        raise AICommitError("Invalid provider. Use 'codex' or 'opencode'.")
+
+    if args.model:
+        model = args.model
+    elif shortcut_model:
+        model = shortcut_model
+    elif provider == "codex":
+        model = str(config["codex_model"])
+    else:
+        model = str(config["opencode_model"])
+
+    return ModelSelection(provider=provider, model=model)
+
+
+def generate_message(provider: str, prompt: str, model: str) -> str:
     if provider == "codex":
-        return generate_with_codex(prompt, model or str(config["codex_model"]))
+        return generate_with_codex(prompt, model)
     if provider == "opencode":
-        return generate_with_opencode(prompt, model or str(config["opencode_model"]))
+        return generate_with_opencode(prompt, model)
     raise AICommitError("Invalid provider. Use 'codex' or 'opencode'.")
 
 
@@ -79,9 +134,7 @@ def run(argv: Optional[Sequence[str]] = None) -> int:
     args = parser.parse_args(argv)
     config = load_config()
 
-    provider = args.provider or str(config["provider"])
-    if provider not in {"codex", "opencode"}:
-        raise AICommitError("Invalid provider. Use 'codex' or 'opencode'.")
+    selection = resolve_model_selection(args, config)
 
     staged_only = (
         resolve_bool(config["staged_only"], "staged_only")
@@ -110,8 +163,9 @@ def run(argv: Optional[Sequence[str]] = None) -> int:
     with status("Reading changed files...", quiet=args.quiet):
         files = get_cached_name_status()
     prompt = build_prompt(diff_text)
-    with status(f"Generating commit message with {provider}...", quiet=args.quiet):
-        raw_message = generate_message(provider, prompt, config, args.model)
+    provider_label = f"{selection.provider}/{selection.model}"
+    with status(f"Generating commit message with {provider_label}...", quiet=args.quiet):
+        raw_message = generate_message(selection.provider, prompt, selection.model)
     message = sanitize_message(raw_message)
 
     print()
