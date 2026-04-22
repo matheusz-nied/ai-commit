@@ -1,5 +1,5 @@
 # ai-commit
-
+teste
 Generate clean git commit messages from your staged diff using Codex or OpenCode.
 
 `ai-commit` is a small Python CLI that works in any git repository. It stages changes by default, asks an AI provider for a Conventional Commit message, shows a preview, and then asks before creating the commit.
@@ -71,6 +71,12 @@ ai-commit --provider codex
 ai-commit --provider opencode
 ```
 
+Force a model for one run:
+
+```bash
+ai-commit --provider opencode --model opencode-go/kimi-k2.5
+```
+
 Skip the confirmation prompt:
 
 ```bash
@@ -91,7 +97,7 @@ Example:
 {
   "provider": "codex",
   "codex_model": "gpt-5.4",
-  "opencode_model": "openai/gpt-5",
+  "opencode_model": "opencode-go/kimi-k2.5",
   "confirm": true,
   "staged_only": false,
   "max_diff_chars": 120000
@@ -105,6 +111,15 @@ By default, `ai-commit` runs `git add -A` before reading the staged diff. Set `"
 For Codex, the `codex` command must be available in `PATH`.
 
 For OpenCode, the `opencode` command must be available in `PATH`.
+
+For OpenCode Go, use model ids like:
+
+```text
+opencode-go/kimi-k2.5
+opencode-go/glm-5
+opencode-go/minimax-m2.5
+opencode-go/qwen3.6-plus
+```
 
 ## VS Code or Windsurf
 

@@ -20,5 +20,11 @@ def generate_with_opencode(prompt: str, model: str) -> str:
 
     content = proc.stdout.strip()
     if not content:
-        raise AICommitError("OpenCode returned no content.")
+        details = proc.stderr.strip()
+        hint = f" Details: {details}" if details else ""
+        raise AICommitError(
+            "OpenCode returned no content. Check the model id and authentication."
+            f" Try --model opencode-go/kimi-k2.5, opencode-go/glm-5, "
+            f"opencode-go/minimax-m2.5, or opencode-go/qwen3.6-plus.{hint}"
+        )
     return content

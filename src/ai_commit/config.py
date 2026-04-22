@@ -10,7 +10,7 @@ CONFIG_PATH = Path.home() / ".config" / "ai-commit" / "config.json"
 DEFAULT_CONFIG: Dict[str, Any] = {
     "provider": "codex",
     "codex_model": "gpt-5.4",
-    "opencode_model": "openai/gpt-5",
+    "opencode_model": "opencode-go/kimi-k2.5",
     "confirm": True,
     "staged_only": False,
     "max_diff_chars": 120000,

@@ -19,6 +19,7 @@ def build_parser() -> argparse.ArgumentParser:
         description="Generate a Conventional Commit message from your git diff.",
     )
     parser.add_argument("--provider", choices=["codex", "opencode"], help="AI provider to use.")
+    parser.add_argument("--model", help="Model to use for this run, overriding config.")
 
     staging = parser.add_mutually_exclusive_group()
     staging.add_argument(
@@ -65,11 +66,11 @@ def resolve_int(value: Any, name: str) -> int:
     return parsed
 
 
-def generate_message(provider: str, prompt: str, config: Dict[str, Any]) -> str:
+def generate_message(provider: str, prompt: str, config: Dict[str, Any], model: Optional[str] = None) -> str:
     if provider == "codex":
-        return generate_with_codex(prompt, str(config["codex_model"]))
+        return generate_with_codex(prompt, model or str(config["codex_model"]))
     if provider == "opencode":
-        return generate_with_opencode(prompt, str(config["opencode_model"]))
+        return generate_with_opencode(prompt, model or str(config["opencode_model"]))
     raise AICommitError("Invalid provider. Use 'codex' or 'opencode'.")
 
 
@@ -110,7 +111,7 @@ def run(argv: Optional[Sequence[str]] = None) -> int:
         files = get_cached_name_status()
     prompt = build_prompt(diff_text)
     with status(f"Generating commit message with {provider}...", quiet=args.quiet):
-        raw_message = generate_message(provider, prompt, config)
+        raw_message = generate_message(provider, prompt, config, args.model)
     message = sanitize_message(raw_message)
 
     print()
