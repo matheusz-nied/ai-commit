@@ -10,6 +10,7 @@ from .messages import sanitize_message
 from .preview import render_preview
 from .prompts import build_prompt
 from .providers import generate_with_codex, generate_with_opencode
+from .status import status
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -37,6 +38,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--yes", action="store_true", help="Accept the generated message without prompting.")
     parser.add_argument("--no-confirm", action="store_true", help="Do not ask before creating the commit.")
     parser.add_argument("--dry-run", action="store_true", help="Show the preview without creating a commit.")
+    parser.add_argument("--quiet", action="store_true", help="Hide progress messages.")
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     return parser
 
@@ -88,12 +90,15 @@ def run(argv: Optional[Sequence[str]] = None) -> int:
     confirm = resolve_bool(config["confirm"], "confirm") and not args.no_confirm
     max_diff_chars = resolve_int(config["max_diff_chars"], "max_diff_chars")
 
-    ensure_git_repo()
+    with status("Checking git repository...", quiet=args.quiet):
+        ensure_git_repo()
 
     if not staged_only:
-        add_all()
+        with status("Staging changes with git add -A...", quiet=args.quiet):
+            add_all()
 
-    diff_text = get_cached_diff()
+    with status("Reading staged diff...", quiet=args.quiet):
+        diff_text = get_cached_diff()
     if not diff_text.strip():
         print("No staged changes to commit.")
         return 0
@@ -101,9 +106,11 @@ def run(argv: Optional[Sequence[str]] = None) -> int:
     if len(diff_text) > max_diff_chars:
         diff_text = diff_text[:max_diff_chars].rstrip() + "\n\n[diff truncated]\n"
 
-    files = get_cached_name_status()
+    with status("Reading changed files...", quiet=args.quiet):
+        files = get_cached_name_status()
     prompt = build_prompt(diff_text)
-    raw_message = generate_message(provider, prompt, config)
+    with status(f"Generating commit message with {provider}...", quiet=args.quiet):
+        raw_message = generate_message(provider, prompt, config)
     message = sanitize_message(raw_message)
 
     print()
@@ -120,7 +127,8 @@ def run(argv: Optional[Sequence[str]] = None) -> int:
             print("Cancelled.")
             return 0
 
-    commit(message)
+    with status("Creating git commit...", quiet=args.quiet):
+        commit(message)
     print("Commit created.")
     return 0
 

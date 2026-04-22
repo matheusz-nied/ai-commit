@@ -11,11 +11,12 @@ class CliTests(unittest.TestCase):
         self.assertIsNone(args.staged_only)
 
     def test_parser_handles_staged_only_and_provider(self):
-        args = build_parser().parse_args(["--provider", "opencode", "--staged-only", "--dry-run"])
+        args = build_parser().parse_args(["--provider", "opencode", "--staged-only", "--dry-run", "--quiet"])
 
         self.assertEqual(args.provider, "opencode")
         self.assertTrue(args.staged_only)
         self.assertTrue(args.dry_run)
+        self.assertTrue(args.quiet)
 
     def test_resolve_bool_accepts_common_strings(self):
         self.assertTrue(resolve_bool("yes", "confirm"))

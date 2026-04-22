@@ -58,6 +58,12 @@ Show the preview without creating a commit:
 ai-commit --dry-run
 ```
 
+Hide progress messages:
+
+```bash
+ai-commit --quiet
+```
+
 Force a provider for one run:
 
 ```bash
