@@ -177,7 +177,14 @@ You can call the CLI from a global user task:
 Run tests:
 
 ```bash
-python3 -m unittest discover -s tests
+python -m pip install -e .
+python -m unittest discover -s tests
+```
+
+Without installing the package:
+
+```bash
+PYTHONPATH=src python -m unittest discover -s tests
 ```
 
 Check the CLI:
