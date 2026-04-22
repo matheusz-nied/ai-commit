@@ -41,7 +41,7 @@ pipx install -e .
 After publishing to PyPI, the intended public install path is:
 
 ```bash
-pipx install ai-commit
+pipx install ai-commit-cli-tool
 ```
 
 ## Usage
