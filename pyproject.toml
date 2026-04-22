@@ -30,8 +30,8 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/your-name/ai-commit"
-Issues = "https://github.com/your-name/ai-commit/issues"
+Homepage = "https://github.com/matheusz-nied/ai-commit"
+Issues = "https://github.com/matheusz-nied/ai-commit/issues"
 
 [project.scripts]
 ai-commit = "ai_commit.cli:main"

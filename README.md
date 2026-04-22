@@ -1,5 +1,5 @@
 # ai-commit
-teste
+
 Generate clean git commit messages from your staged diff using Codex or OpenCode.
 
 `ai-commit` is a small Python CLI that works in any git repository. It stages changes by default, asks an AI provider for a Conventional Commit message, shows a preview, and then asks before creating the commit.
